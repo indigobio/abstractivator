@@ -57,6 +57,24 @@ describe Abstractivator::FiberDefer do
         end
       end
     end
+    it 'cannot be nested in with_fiber_defer' do
+      EM.run do
+        with_fiber_defer do
+          expect{with_fiber_defer{}}.to raise_error /nested/
+          EM.stop
+        end
+      end
+    end
+    it 'cannot be nested in fiber_defer' do
+      EM.run do
+        with_fiber_defer do
+          fiber_defer do
+            expect{with_fiber_defer{}}.to raise_error /nested/
+          end
+          EM.stop
+        end
+      end
+    end
   end
 
   describe '#fiber_defer' do
@@ -216,6 +234,16 @@ describe Abstractivator::FiberDefer do
         EM.run do
           with_fiber_defer do
             expect{fiber_defer(3){ }}.to raise_error /guard/
+          end
+          EM.stop
+        end
+      end
+    end
+    it 'cannot be nested in fiber_defer' do
+      EM.run do
+        with_fiber_defer do
+          fiber_defer do
+            expect{fiber_defer{}}.to raise_error /nested/
           end
           EM.stop
         end

@@ -21,6 +21,8 @@ module Abstractivator
 
     def with_fiber_defer(thread_var_guard=nil, &block)
       raise 'this method requires an eventmachine reactor to be running' unless EM.reactor_running?
+      raise 'with_fiber_defer cannot be nested within with_fiber_defer' if Thread.current[:fiber_defer_guard_proc]
+      raise 'with_fiber_defer cannot be nested within fiber_defer' if Thread.current[:inside_fiber_defer]
       return unless block
       guard_proc = make_guard_proc(thread_var_guard)
       f = Fiber.new do
@@ -36,7 +38,9 @@ module Abstractivator
     end
 
     def fiber_defer(thread_var_guard=nil, &action)
+      # we start out in the caller thread
       inherited_guard_proc = Thread.current[:fiber_defer_guard_proc]
+      raise 'fiber_defer cannot be nested within fiber_defer' if Thread.current[:inside_fiber_defer]
       raise 'fiber_defer must be called within a with_fiber_defer block' unless inherited_guard_proc
       raise 'fiber_defer must be passed an action to defer (the block)' unless action
       local_guard_proc = make_guard_proc(thread_var_guard)
@@ -46,11 +50,17 @@ module Abstractivator
       end
       begin
         basic_fiber_defer do
-          # in the background thread
-          guard_proc.call
-          action.call
+          # in the background thread now
+          begin
+            Thread.current[:inside_fiber_defer] = true
+            guard_proc.call
+            action.call
+          ensure
+            Thread.current[:inside_fiber_defer] = false
+          end
         end
       ensure
+        # back in the caller thread
         guard_proc.call
       end
     end
