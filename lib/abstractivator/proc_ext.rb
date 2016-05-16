@@ -8,6 +8,12 @@ module MethodAndProcExtensions
       Proc.loose_call(self, args, kws, &block)
     end
   end
+
+  KEYWORD_PARAMETER_TYPES = %i(key keyreq keyrest).freeze
+
+  def accepts_keywords
+    @accepts_keywords ||= parameters.select{|param| KEYWORD_PARAMETER_TYPES.include?(param.first)}.any?
+  end
 end
 
 class Proc
@@ -49,6 +55,14 @@ class Proc
   def reverse_args
     proc do |*args, &block|
       self.call(*args.reverse, &block)
+    end
+  end
+
+  def proxy_call(*args, **kws, &block)
+    if accepts_keywords
+      call(*args, **kws, &block)
+    else
+      call(*args, &block)
     end
   end
 
@@ -112,5 +126,13 @@ end
 class Object
   def callable?
     respond_to?(:call)
+  end
+
+  def proxy_send(method_name, *args, **kws, &block)
+    if method(method_name).accepts_keywords
+      send(method_name, *args, **kws, &block)
+    else
+      send(method_name, *args, &block)
+    end
   end
 end
