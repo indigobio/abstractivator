@@ -169,6 +169,7 @@ context 'in the world of functional programming' do
       block = proc{}
       expect(with_kws.proxy_call(*args, **kws, &block)).to eql [1, 2, 3, 4, block]
       expect(without_kws.proxy_call(*args, &block)).to eql [1, 2, nil, block]
+      expect(without_kws.proxy_call(1, a: 2, &block)).to eql [1, {a: 2}, nil, block]
     end
   end
 end
@@ -212,5 +213,6 @@ describe 'Object#proxy_send' do
     block = proc{}
     expect(Spy.new.proxy_send(:with_kws, *args, **kws, &block)).to eql [1, 2, 3, 4, block]
     expect(Spy.new.proxy_send(:without_kws, *args, &block)).to eql [1, 2, block]
+    expect(Spy.new.proxy_send(:without_kws, 1, a: 2, &block)).to eql [1, {a: 2}, block]
   end
 end
