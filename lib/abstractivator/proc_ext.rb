@@ -12,7 +12,7 @@ module MethodAndProcExtensions
   KEYWORD_PARAMETER_TYPES = %i(key keyreq keyrest).freeze
 
   def accepts_keywords
-    @accepts_keywords ||= parameters.select{|param| KEYWORD_PARAMETER_TYPES.include?(param.first)}.any?
+    @accepts_keywords ||= parameters.any?{|param| KEYWORD_PARAMETER_TYPES.include?(param.first)}
   end
 end
 
@@ -61,6 +61,8 @@ class Proc
   def proxy_call(*args, **kws, &block)
     if accepts_keywords
       call(*args, **kws, &block)
+    elsif kws.any?
+      call(*(args + [kws]), &block)
     else
       call(*args, &block)
     end
@@ -131,6 +133,8 @@ class Object
   def proxy_send(method_name, *args, **kws, &block)
     if method(method_name).accepts_keywords
       send(method_name, *args, **kws, &block)
+    elsif kws.any?
+      send(method_name, *(args + [kws]), &block)
     else
       send(method_name, *args, &block)
     end
