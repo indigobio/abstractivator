@@ -23,5 +23,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'eventmachine'
   spec.add_development_dependency 'mongoid'
 
-  spec.add_runtime_dependency 'activesupport', '~> 4.0'
+  spec.add_runtime_dependency 'activesupport', '> 4', '< 6'
 end
