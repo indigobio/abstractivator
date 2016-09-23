@@ -68,12 +68,12 @@ describe Enumerable do
 
     it 'throws an exception when left values have overlapping keys' do
       x.push({ a: 8, b: 5, c: 'oops' })
-      expect { Enumerable.outer_join(x, y, get_key, get_key, -1, -100) }.to raise_error
+      expect { Enumerable.outer_join(x, y, get_key, get_key, -1, -100) }.to raise_error RuntimeError
     end
 
     it 'throws an exception when right values have overlapping keys' do
       y.push({ a: 5, b: 6, c: 'oops' })
-      expect { Enumerable.outer_join(x, y, get_key, get_key, -1, -100) }.to raise_error
+      expect { Enumerable.outer_join(x, y, get_key, get_key, -1, -100) }.to raise_error RuntimeError
     end
   end
 
