@@ -7,8 +7,8 @@ describe Array do
       expect([:k, :v].key).to eql :k
     end
     it 'raises an error if the array is not of size 2' do
-      expect{[:k].key}.to raise_error
-      expect{[:k, :v, :z].key}.to raise_error
+      expect{[:k].key}.to raise_error RuntimeError
+      expect{[:k, :v, :z].key}.to raise_error RuntimeError
     end
   end
 
@@ -17,8 +17,8 @@ describe Array do
       expect([:k, :v].value).to eql :v
     end
     it 'raises an error if the array is not of size 2' do
-      expect{[:k].value}.to raise_error
-      expect{[:k, :v, :z].value}.to raise_error
+      expect{[:k].value}.to raise_error RuntimeError
+      expect{[:k, :v, :z].value}.to raise_error RuntimeError
     end
   end
 

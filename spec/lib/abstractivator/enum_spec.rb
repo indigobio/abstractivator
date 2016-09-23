@@ -33,7 +33,7 @@ describe Enum do
       expect(Container::Traditional.from_symbol(:bar)).to eql 'bar'
     end
     it 'raises an error if no such value exists in the enumeration' do
-      expect{Container::Traditional.from_symbol(:baz)}.to raise_error
+      expect{Container::Traditional.from_symbol(:baz)}.to raise_error RuntimeError
     end
   end
   describe '::from' do
