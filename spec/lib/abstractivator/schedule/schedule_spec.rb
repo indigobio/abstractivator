@@ -48,7 +48,7 @@ describe Schedule do
       end
       bad = %w(- : . 4 M) + [' ']
       bad.each do |delimiter|
-        expect { Schedule.new("1:00-2:00#{delimiter}MWF") }.to raise_error
+        expect { Schedule.new("1:00-2:00#{delimiter}MWF") }.to raise_error RuntimeError
       end
     end
     it 'raises an exception when a bad day-of-week specifier is provided' do

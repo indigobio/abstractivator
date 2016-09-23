@@ -16,7 +16,7 @@ describe 'Enumerator' do
       expect(Enumerator.unfold(nil){}.to_a).to eql []
     end
     it 'raises an error if no block is provided' do
-      expect{Enumerator.unfold(nil)}.to raise_error
+      expect{Enumerator.unfold(nil)}.to raise_error RuntimeError
     end
   end
 

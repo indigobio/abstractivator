@@ -150,6 +150,28 @@ context 'in the world of functional programming' do
       p.loosen_args.call(*args, **kws, &block)
     end
   end
+
+  describe 'Proc#accepts_keywords' do
+    it 'indicates if the proc accepts keywords' do
+      expect(proc{}.accepts_keywords).to be false
+      expect(proc{|**kws|}.accepts_keywords).to be true
+      expect(proc{|a: 1|}.accepts_keywords).to be true
+      expect(proc{|a:|}.accepts_keywords).to be true
+    end
+  end
+
+  describe 'Proc#proxy_call' do
+    it 'calls the proc with the given args, block, and keywords (if accepted)' do
+      with_kws = proc { |x, y, a:, b:, &block| [x, y, a, b, block] }
+      without_kws = proc { |x, y, z, &block| [x, y, z, block] }
+      args = [1, 2]
+      kws = {a: 3, b: 4}
+      block = proc{}
+      expect(with_kws.proxy_call(*args, **kws, &block)).to eql [1, 2, 3, 4, block]
+      expect(without_kws.proxy_call(*args, &block)).to eql [1, 2, nil, block]
+      expect(without_kws.proxy_call(1, a: 2, &block)).to eql [1, {a: 2}, nil, block]
+    end
+  end
 end
 
 describe 'UnboundMethod#explicit_receiver' do
@@ -177,5 +199,20 @@ describe 'Object#callable?' do
     expect(1.callable?).to be_falsey
     expect(proc{}).to be_truthy
     expect(double(call: 1)).to be_truthy
+  end
+end
+
+describe 'Object#proxy_send' do
+  class Spy
+    def with_kws(x, y, a:, b:, &block); [x, y, a, b, block]; end
+    def without_kws(x, y, &block); [x, y, block]; end
+  end
+  it 'calls the method with the given args, block, and keywords (if accepted)' do
+    args = [1, 2]
+    kws = {a: 3, b: 4}
+    block = proc{}
+    expect(Spy.new.proxy_send(:with_kws, *args, **kws, &block)).to eql [1, 2, 3, 4, block]
+    expect(Spy.new.proxy_send(:without_kws, *args, &block)).to eql [1, 2, block]
+    expect(Spy.new.proxy_send(:without_kws, 1, a: 2, &block)).to eql [1, {a: 2}, block]
   end
 end
