@@ -22,6 +22,7 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency 'rake'
   spec.add_development_dependency 'eventmachine'
   spec.add_development_dependency 'mongoid'
+  spec.add_development_dependency 'rspec_junit_formatter'
 
   spec.add_runtime_dependency 'activesupport', '> 4', '< 6'
 end
