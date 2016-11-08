@@ -3,7 +3,7 @@ module Abstractivator
     def deep_sort_hash(obj)
       case obj
       when Hash
-        obj.sort.to_h.each_with_object({}) do |(k, v), a|
+        obj.sort.each_with_object({}) do |(k, v), a|
           a[k] = deep_sort_hash(v)
         end
       when Array
