@@ -161,4 +161,44 @@ describe Enumerable do
       expect(result).to eql({ 'Object' => Object, 'Hash' => Hash, 'Array' => Array })
     end
   end
+
+  describe '#select_map' do
+    it 'maps, then rejects falsey values' do
+      result = [1,2,3].select_map do |x|
+        if x == 2
+          nil
+        else
+          -x
+        end
+      end
+      expect(result).to eql [-1, -3]
+    end
+    it 'invokes the block only once per item' do
+      count = 0
+      [1,2,3].select_map { count += 1 }
+      expect(count).to eql 3
+    end
+  end
+
+  describe '#single' do
+    it 'when there is exactly one value, returns the value' do
+      expect([34].single).to eql 34
+    end
+    it 'otherwise, raises an error' do
+      expect { [].single }.to raise_error ArgumentError
+      expect { [34, 5].single }.to raise_error ArgumentError
+    end
+  end
+
+  describe '#unique_by' do
+    it 'returns the unique set, where identity is established by the transformer block' do
+      expect(['a', 'aa', 'bb', 'b', 'c'].unique_by { |x| x[0] }).to eql ['a', 'bb', 'c']
+    end
+  end
+
+  describe '#duplicates' do
+    it 'returns the set of duplicate identities, where identity is established by the transformer block' do
+      expect(['a', 'aa', 'bb', 'b', 'c'].duplicates { |x| x[0] }).to eql ['a', 'b']
+    end
+  end
 end

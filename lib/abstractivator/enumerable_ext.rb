@@ -102,4 +102,25 @@ module Enumerable
     end
     sorted.map(&:first)
   end
+
+  def select_map(&block)
+    self.map(&block).select { |x| x }
+  end
+
+  def single
+    if size != 1
+      raise ArgumentError, "expected a single element but was: #{inspect}"
+    end
+    self.first
+  end
+
+  def unique_by(&block)
+    self.group_by(&block).map { |_, vs| vs.first }
+  end
+
+  def duplicates(&block)
+    group_by(&block)
+      .select { |_, vs| vs.size > 1 }
+      .map { |k, _| k }
+  end
 end
