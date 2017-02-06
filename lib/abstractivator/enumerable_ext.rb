@@ -123,4 +123,29 @@ module Enumerable
       .select { |_, vs| vs.size > 1 }
       .map { |k, _| k }
   end
+
+  # Folds over a cyclic graph. 'self' is the root node set.
+  # Each node is visited once, in an unspecified order.
+  # Node identity is determined by #object_id
+  # @param init [Object] the initial accumulator
+  # @param get_children_proc [Proc] takes a node and returns its children (or neighbors)
+  # @yieldparam acc [Object] the accumulator
+  # @yieldparam node [Object] the current node
+  # @yieldreturn [Object] the accumulator, after visiting all nodes once
+  def cyclic_fold(init, get_children_proc, &block)
+    xs = self.dup
+    seen = Set.new
+    acc = init
+    while xs.any?
+      x = xs.shift
+      if seen.include?(x.object_id)
+        next
+      else
+        seen.add(x.object_id)
+        acc = block.call(acc, x)
+        xs.concat(get_children_proc.call(x))
+      end
+    end
+    acc
+  end
 end

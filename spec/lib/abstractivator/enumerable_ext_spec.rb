@@ -201,4 +201,20 @@ describe Enumerable do
       expect(['a', 'aa', 'bb', 'b', 'c'].duplicates { |x| x[0] }).to eql ['a', 'b']
     end
   end
+
+  describe '#cyclic_fold' do
+    it 'Folds over a cyclic graph' do
+      a = {}
+      b = {}
+      g = {}
+      a.merge!(g: g)
+      b.merge!(g: g)
+      g.merge!(a: a, b: b)
+
+      result = [g].cyclic_fold([], :values.to_proc) do |acc, x|
+        acc + [x]
+      end
+      expect(result).to eql [g, a, b]
+    end
+  end
 end
