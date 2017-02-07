@@ -172,6 +172,19 @@ context 'in the world of functional programming' do
       expect(without_kws.proxy_call(1, a: 2, &block)).to eql [1, {a: 2}, nil, block]
     end
   end
+
+  describe 'Proc#loosen_varargs!' do
+    it 'allows varargs functions to receive explicit arrays' do
+      args = [1, 2]
+      expect(foo(*args)).to eql args
+      expect(foo(args)).to eql args
+    end
+
+    def foo(*args)
+      Proc.loosen_varargs!(args)
+      args
+    end
+  end
 end
 
 describe 'UnboundMethod#explicit_receiver' do

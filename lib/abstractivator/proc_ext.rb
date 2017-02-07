@@ -97,6 +97,15 @@ class Proc
       x.call(*args, &block)
     end
   end
+
+  def self.loosen_varargs!(args)
+    if args.size == 1 && args.first.is_a?(Array)
+      real_args = args.first
+      args.clear
+      args.concat(real_args)
+      nil
+    end
+  end
 end
 
 class Method
