@@ -45,4 +45,11 @@ describe Abstractivator::Cons do
     end
   end
 
+  describe '#empty?' do
+    it 'determines whether or not the list is empty' do
+      expect(enum_to_list([1]).empty?).to be false
+      expect(empty_list.empty?).to be true
+    end
+  end
+
 end

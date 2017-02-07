@@ -1,6 +1,7 @@
 module Abstractivator
   module Cons
     Nil = Object.new
+    Nil.define_singleton_method(:empty?) { true }
 
     def empty_list
       Nil
