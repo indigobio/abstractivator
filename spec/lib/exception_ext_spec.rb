@@ -13,7 +13,6 @@ describe Exception do
           raise 'there was an error'
         end
       rescue => e
-        e.print_full_trace
         e.print_full_trace(io)
       end
       expect(io.string).to match /RuntimeError: there was an error.*Caused by.*ArgumentError: x must not be nil/m
