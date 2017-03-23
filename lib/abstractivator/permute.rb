@@ -2,6 +2,7 @@ module Abstractivator
   module Permute
     def permute(vars={}, &block)
       return [] if vars.empty?
+      block ||= proc { |**kws| kws.values }
       perm(vars.each_pair.map{|k, v| [k, v.to_a]}, {}, &block)
     end
 

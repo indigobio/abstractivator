@@ -9,6 +9,11 @@ describe Abstractivator::Permute do
     expect(result).to match_array [[1, 3], [1, 4], [1, 5], [2, 3], [2, 4], [2, 5]]
   end
 
+  it 'makes arrays if no block is provided' do
+    result = permute(a: [1], b: [2, 3])
+    expect(result).to match_array [[1, 2], [1, 3]]
+  end
+
   it 'returns empty array when no variables specified' do
     expect(permute).to eql []
   end
