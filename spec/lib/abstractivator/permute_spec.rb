@@ -19,6 +19,8 @@ describe Abstractivator::Permute do
     expect(permute).to eql []
   end
 
+  # checks that refinements are working as intended ...
+
   it 'explicit receiver not allowed' do
     expect(Object.new.respond_to?(:permute)).to be false
   end

@@ -1,7 +1,6 @@
 module Abstractivator
   module Permute
     refine Object do
-
       module Private
         private
         refine Object do
@@ -17,9 +16,7 @@ module Abstractivator
       end
 
       using Private
-
       private
-
       def permute(vars={}, &block)
         return [] if vars.empty?
         block ||= proc { |**kws| kws }
