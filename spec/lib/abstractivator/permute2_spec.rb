@@ -1,8 +1,9 @@
 require 'rspec'
-require 'abstractivator/permute'
+require 'abstractivator/permute2'
+require 'abstractivator/lex_module'
 
-describe Abstractivator::Permute do
-  using Abstractivator::Permute
+describe Abstractivator::Permute2 do
+  lex_include Abstractivator::Permute2
 
   it 'permutes' do
     result = permute(a: 1..2, b: 3..5) { |a:, b:| [a, b]}
