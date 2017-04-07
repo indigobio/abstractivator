@@ -62,7 +62,6 @@ context 'in the world of functional programming' do
       expect(events).to eql [0, 1, 2, 3]  # lambdas are strict in arity,
       # so if their bodies executed, then we know
       # they were called with the correct number of arguments
-
     end
     it 'pads with nils' do
       verify_called_with ->(a, b) {[a, b]},
@@ -120,11 +119,18 @@ context 'in the world of functional programming' do
     end
 
     def verify_called_with(p, input_args, output)
-      expect(do_call(p, input_args, {})).to eql output
+      2.times do
+        # Run twice to ensure the LooseCallInfo caching works.
+        # This is not paranoia; there actually was a bug thanks
+        # to ruby's sloppy scope.
+        expect(do_call(p, input_args, {})).to eql output
+      end
     end
 
     def verify_called_with_keywords(p, input_kws, output)
-      expect(do_call(p, [], input_kws)).to eql output
+      2.times do
+        expect(do_call(p, [], input_kws)).to eql output
+      end
     end
   end
 
@@ -137,6 +143,33 @@ context 'in the world of functional programming' do
     it 'attempts to convert the first argument to proc' do
       expect(Proc.loose_call(:to_s, ['5'])).to eql '5'
     end
+
+    # # Uncomment this to test performance. It runs several typical
+    # # scenarios through both Proc#call and Proc#loose_call to
+    # # evaluate relative performance.
+    # # As of this commit, loose_call was 2-4x slower.
+    # it 'has reasonable performance' do
+    #   require 'benchmark'
+    #   Benchmark.bm do |bm|
+    #     bench = proc do |label, proc_ish, args, kws|
+    #       bm.report("call       #{label}") do
+    #         proc_ish = proc_ish.to_proc if proc_ish.is_a?(Symbol)
+    #         if kws.none?
+    #           1_000_000.times { proc_ish.call(*args) }
+    #         else
+    #           1_000_000.times { proc_ish.call(*args, **kws) }
+    #         end
+    #       end
+    #       bm.report("loose_call #{label}") do
+    #         1_000_000.times { Proc.loose_call(proc_ish, args, kws) }
+    #       end
+    #     end
+    #     bench.('symbol ', :to_s,                  [42], {})
+    #     bench.('proc   ', proc   { |x| x.to_s },  [42], {})
+    #     bench.('lambda ', lambda { |x| x.to_s },  [42], {})
+    #     bench.('keyword', proc   { |a:| a.to_s }, [],   {a: 42})
+    #   end
+    # end
 
     def do_call(p, args, kws={}, &block)
       Proc.loose_call(p, args, kws, &block)
