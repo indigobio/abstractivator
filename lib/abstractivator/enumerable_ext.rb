@@ -9,8 +9,8 @@ module Enumerable
   # returns an array of 2-element arrays, each of which is a left/right pair.
   def self.outer_join(left, right, get_left_key, get_right_key, left_default, right_default)
 
-    ls = left.hash_map(get_left_key)
-    rs = right.hash_map(get_right_key)
+    ls = left.inject({}) { |h, x| h.store(get_left_key.call(x), x); h }   # Avoid #hash_map and Array#to_h
+    rs = right.inject({}) { |h, x| h.store(get_right_key.call(x), x); h } #   for better performance
 
     raise 'duplicate left keys' if ls.size < left.size
     raise 'duplicate right keys' if rs.size < right.size
