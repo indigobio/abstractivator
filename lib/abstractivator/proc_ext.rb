@@ -68,29 +68,56 @@ class Proc
     end
   end
 
-  # tries to coerce x into a procedure, then calls it with
-  # the given argument list.
+  LooseCallInfo = Struct.new(:params, :accepts_arg_splat, :total_arity, :req_arity,
+                             :requires_kw_customization, :all_key_names, :kw_padding)
+
+  # Tries to coerce x into a procedure, then calls it with the given argument list.
   # If x cannot be coerced into a procedure, returns x.
+  # This method is optimized for use cases typically found in tight loops,
+  # namely where x is either a symbol or a keyword-less fixed-arity proc.
+  # It attempts to minimize the number of intermediate arrays created for these cases
+  # (as would be produced by calls to #map, #select, #take, #pad_right, etc.)
+  # CPU overhead created by loose_call is bad, but unexpected memory consumption would
+  # be worse, considering Proc#call has zero memory footprint.
+  # These optimizations produce a ~5x speedup, which is still 2-4x slower than
+  # regular Proc#call.
   def self.loose_call(x, args, kws={}, &block)
+    return x.to_proc.call(*args) if x.is_a?(Symbol) # optimization for a typical use case
     x = x.to_proc if x.respond_to?(:to_proc)
-    x.callable? or return x
-    arg_types = x.parameters.map(&:first)
+    return x unless x.callable?
+
+    # cache proc info for performance
+    info = x.instance_variable_get(:@loose_call_info)
+    unless info
+      params = x.parameters
+      info = LooseCallInfo.new
+      info.params = params
+      info.req_arity = params.count { |p| p.first == :req }
+      info.total_arity = info.req_arity + params.count { |p| p.first == :opt }
+      info.accepts_arg_splat = params.any? { |p| p.first == :rest }
+      accepts_kw_splat = params.any? { |p| p.first == :keyrest }
+      has_kw_args = params.any? { |(type, name)| (type == :key || type == :keyreq) && !name.nil? }
+      info.requires_kw_customization = has_kw_args && !accepts_kw_splat
+      if info.requires_kw_customization
+        opt_key_names = info.params.select { |(type, name)| type == :key && !name.nil? }.map(&:value)
+        req_key_names = info.params.select { |(type, name)| type == :keyreq && !name.nil? }.map(&:value)
+        info.all_key_names = opt_key_names + req_key_names
+        info.kw_padding = req_key_names.hash_map { nil }
+      end
+      x.instance_variable_set(:@loose_call_info, info)
+    end
+
     # customize args
-    req_arity = arg_types.select{|x| x == :req}.size
-    total_arity = req_arity + arg_types.select{|x| x == :opt}.size
-    accepts_arg_splat = arg_types.include?(:rest)
-    unless accepts_arg_splat
-      args = args.take(total_arity).pad_right(req_arity)
+    unless info.accepts_arg_splat
+      args = args.take(info.total_arity) if args.size > info.total_arity
+      args = args.pad_right(info.req_arity) if args.size < info.req_arity
     end
+
     # customize keywords
-    accepts_kw_splat = arg_types.include?(:keyrest)
-    unless accepts_kw_splat
-      opt_key_names = x.parameters.select{|(type, name)| type == :key && !name.nil?}.map(&:value)
-      req_key_names = x.parameters.select{|(type, name)| type == :keyreq && !name.nil?}.map(&:value)
-      all_key_names = opt_key_names + req_key_names
-      padding = req_key_names.hash_map{nil}
-      kws = padding.merge(kws.select{|k| all_key_names.include?(k)})
+    if info.requires_kw_customization
+      kws = info.kw_padding.merge(kws.select { |k| info.all_key_names.include?(k) })
     end
+
     if kws.any?
       x.call(*args, **kws, &block)
     else
