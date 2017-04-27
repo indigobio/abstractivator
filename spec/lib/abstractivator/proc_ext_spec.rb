@@ -112,6 +112,11 @@ context 'in the world of functional programming' do
       result = do_call(p, [11, 22], {d: 44, z: 5}) { 42 }
       expect(result).to eql [11, 22, 3, 44, 5, nil, 42]
     end
+    it 'works when the proc accepts no keyword arguments' do
+      p = ->(a) {[a]}
+      result = do_call(p, [42], {a: 99})
+      expect(result).to eql [42]
+    end
     it 'works with a mixture of splat types' do
       p = ->(*args, **kws, &block){[args, kws, block.call]}
       result = do_call(p, [1, 2], {c: 3, d: 4}) { 42 }
