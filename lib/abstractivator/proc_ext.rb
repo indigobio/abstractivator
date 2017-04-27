@@ -97,7 +97,7 @@ class Proc
       info.accepts_arg_splat = params.any? { |p| p.first == :rest }
       accepts_kw_splat = params.any? { |p| p.first == :keyrest }
       has_kw_args = params.any? { |(type, name)| (type == :key || type == :keyreq) && !name.nil? }
-      info.requires_kw_customization = has_kw_args && !accepts_kw_splat
+      info.requires_kw_customization = (has_kw_args || kws.any?) && !accepts_kw_splat
       if info.requires_kw_customization
         opt_key_names = info.params.select { |(type, name)| type == :key && !name.nil? }.map(&:value)
         req_key_names = info.params.select { |(type, name)| type == :keyreq && !name.nil? }.map(&:value)
