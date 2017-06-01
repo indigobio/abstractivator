@@ -29,7 +29,7 @@ describe Abstractivator::Lazy do
     expect(lazy { 42 } != 42).to be false
     expect(lazy { 42 } != 99).to be true
     expect(lazy { 42 } === 42).to be true
-    expect(Fixnum === lazy { 42 }).to be true
+    expect(Integer === lazy { 42 }).to be true
     expect(Array === lazy { 42 }).to be false
     expect(!(lazy { true })).to be false
     expect(!(lazy { false })).to be true
@@ -54,7 +54,7 @@ describe Abstractivator::Lazy do
     it 'reveals the value type if the value has already been forced' do
       value = lazy { 42 }
       value.to_s
-      expect(value.inspect).to match /#<Abstractivator::Lazy:Fixnum:0x[0-9a-f]+>/
+      expect(value.inspect).to match /#<Abstractivator::Lazy:Integer:0x[0-9a-f]+>/
     end
   end
 
