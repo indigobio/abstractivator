@@ -40,7 +40,7 @@ describe Abstractivator::FiberDefer do
       it 'propagates the thread/fiber-local variables into the block' do
         EM.run do
           guard = {
-            Thread.current[:meaning] => proc { |x| Thread.current[:meaning] = x }
+              Thread.current[:meaning] => proc { |x| Thread.current[:meaning] = x }
           }
           with_fiber_defer(guard) do
             expect(Thread.current[:meaning]).to eql 42
@@ -119,6 +119,34 @@ describe Abstractivator::FiberDefer do
       EM.run do
         with_fiber_defer do
           expect{fiber_defer{raise 'oops'}}.to raise_error 'oops'
+          EM.stop
+        end
+      end
+    end
+    it 'terminates the worker thread on SignalError' do
+      EM.run do
+        with_fiber_defer do
+          worker_thread = nil
+          f = Fiber.current
+          fiber_defer do
+            worker_thread = Thread.current
+            worker_thread.abort_on_exception = false # don't immediately exit() the main thread when we raise
+            EM.next_tick { f.resume([nil, nil]) } # allow fiber_defer to return when control returns to the event loop on the main thread
+            raise SignalException.new('TERM')
+          end
+          expect { worker_thread.join(1) }.to raise_error SignalException # join raises when Thread#abort_on_exception is false
+          expect(worker_thread.alive?).to be_falsey
+          EM.threadpool.clear # otherwise, EM will try to re-join these during its cleanup, crash, and leave the EM singleton in a bad state for future tests
+          EM.stop
+        end
+      end
+    end
+    it 'does not terminate the worker thread on non-SignalErrors' do
+      EM.run do
+        with_fiber_defer do
+          worker_thread = nil
+          expect{fiber_defer{ worker_thread = Thread.current; raise 'oops' }}.to raise_error 'oops'
+          expect(worker_thread.alive?).to be_truthy
           EM.stop
         end
       end
@@ -205,15 +233,15 @@ describe Abstractivator::FiberDefer do
         it 'applies the inherited guard and then the local guard upon entering and exiting the block' do
           EM.run do
             guard1 = {
-              Thread.current[:a] => proc {|x| Thread.current[:a] = x},
-              Thread.current[:b] => proc {|x| Thread.current[:b] = x}
+                Thread.current[:a] => proc {|x| Thread.current[:a] = x},
+                Thread.current[:b] => proc {|x| Thread.current[:b] = x}
             }
             with_fiber_defer(guard1) do
               Thread.current[:b] = 22
               Thread.current[:c] = 33
               guard2 = {
-                Thread.current[:b] => proc {|x| Thread.current[:b] = x},
-                Thread.current[:c] => proc {|x| Thread.current[:c] = x}
+                  Thread.current[:b] => proc {|x| Thread.current[:b] = x},
+                  Thread.current[:c] => proc {|x| Thread.current[:c] = x}
               }
               fiber_defer(guard2) do
                 expect(Thread.current[:a]).to eql 1

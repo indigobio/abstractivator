@@ -98,6 +98,12 @@ module Abstractivator
       safe_action = proc do
         begin
           [action.call, nil]
+        rescue SignalException => e
+          # The thread has been instructed to shut down, so let it.
+          # Don't pass on the exception to another thread/fiber.
+          # We will assume whatever is shutting down the thread will
+          # also account for the paused fiber on its own.
+          raise
         rescue Exception => e
           [nil, e]
         end
