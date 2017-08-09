@@ -1,4 +1,5 @@
 class Enumerator
+  # Enumerate values produced from an initial state. The enumerator terminates when the next state is nil.
   # @param state [Object] The initial state
   # @yieldparam state [Object] the current state
   # @yieldreturn [Array] a 2-element array containing the next value and the next state
