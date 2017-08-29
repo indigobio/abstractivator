@@ -12,21 +12,43 @@ module Abstractivator
       SetMask.new(items, get_key)
     end
 
-    # Compares a tree to a mask.
-    # Returns a diff of where the tree differs from the mask.
-    # Ignores parts of the tree not specified in the mask.
-    def tree_compare(tree, mask, path=[], index=nil)
-      if mask == [:*] && tree.is_a?(Enumerable)
-        []
-      elsif mask == :+ && tree != :__missing__
-        []
-      elsif mask == :- && tree != :__missing__
-        [diff(path, tree, :__absent__)]
-      elsif mask.callable?
-        are_equivalent = mask.call(tree)
-        are_equivalent ? [] : [diff(path, tree, mask)]
-      else
-        case mask
+    module TypeComparison
+      def none
+        proc { true }
+      end
+
+      def exact
+        proc { |a, b| a.class == b.class }
+      end
+
+      extend self
+    end
+
+    def tree_compare(tree, mask, type_comparison: TypeComparison.none)
+      Comparer.new(type_comparison).tree_compare(tree, mask)
+    end
+
+    class Comparer
+      attr_reader :type_comparison
+      def initialize(type_comparison)
+        @type_comparison = type_comparison
+      end
+
+      # Compares a tree to a mask.
+      # Returns a diff of where the tree differs from the mask.
+      # Ignores parts of the tree not specified in the mask.
+      def tree_compare(tree, mask, path=[], index=nil)
+        if mask == [:*] && tree.is_a?(Enumerable)
+          []
+        elsif mask == :+ && tree != :__missing__
+          []
+        elsif mask == :- && tree != :__missing__
+          [diff(path, tree, :__absent__)]
+        elsif mask.callable?
+          are_equivalent = mask.call(tree)
+          are_equivalent ? [] : [diff(path, tree, mask)]
+        else
+          case mask
           when Hash
             if tree.is_a?(Hash)
               mask.each_pair.flat_map do |k, v|
@@ -85,37 +107,38 @@ module Abstractivator
             end
           else
             tree == mask ? [] : [diff(path, tree, mask)]
+          end
         end
       end
-    end
 
-    private
+      private
 
-    def hashify_set(items, get_key)
-      Hash[items.map{|x| [get_key.call(x), x] }]
-    end
+      def hashify_set(items, get_key)
+        Hash[items.map{|x| [get_key.call(x), x] }]
+      end
 
-    def duplicates(xs)
-      xs.group_by{|x| x}.each_pair.select{|_k, v| v.size > 1}.map(&:first)
-    end
+      def duplicates(xs)
+        xs.group_by{|x| x}.each_pair.select{|_k, v| v.size > 1}.map(&:first)
+      end
 
-    def push_path(path, name)
-      path + [name]
-    end
+      def push_path(path, name)
+        path + [name]
+      end
 
-    def path_string(path)
-      path.join('/')
-    end
+      def path_string(path)
+        path.join('/')
+      end
 
-    def diff(path, tree, mask)
-      {path: path_string(path), tree: tree, mask: massage_mask_for_diff(mask)}
-    end
+      def diff(path, tree, mask)
+        {path: path_string(path), tree: tree, mask: massage_mask_for_diff(mask)}
+      end
 
-    def massage_mask_for_diff(mask)
-      if mask.callable?
-        :__predicate__
-      else
-        mask
+      def massage_mask_for_diff(mask)
+        if mask.callable?
+          :__predicate__
+        else
+          mask
+        end
       end
     end
   end
