@@ -18,7 +18,7 @@ module Abstractivator
       end
 
       def exact
-        proc { |a, b| a.class == b.class }
+        proc { |tree, mask| tree.class == mask.class }
       end
 
       extend self
@@ -29,9 +29,10 @@ module Abstractivator
     end
 
     class Comparer
-      attr_reader :type_comparison
-      def initialize(type_comparison)
-        @type_comparison = type_comparison
+      attr_reader :type_comparer
+
+      def initialize(type_comparer)
+        @type_comparer = type_comparer
       end
 
       # Compares a tree to a mask.
@@ -106,7 +107,7 @@ module Abstractivator
               [diff(path, tree, mask)]
             end
           else
-            tree == mask ? [] : [diff(path, tree, mask)]
+            tree == mask && type_comparer.call(tree, mask) ? [] : [diff(path, tree, mask)]
           end
         end
       end
