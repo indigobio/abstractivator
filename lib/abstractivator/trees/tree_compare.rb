@@ -114,12 +114,7 @@ module Abstractivator
       private
 
       def hash_like?(x)
-        x.is_a?(Hash) ||
-            (!x.is_a?(Array) &&
-                !x.is_a?(String) &&
-                !x.is_a?(SetMask) &&
-                (x.respond_to?(:[]) &&
-                    x.respond_to?(:[]=)))
+        x.respond_to?(:each_pair) && x.respond_to?(:fetch)
       end
 
       def array_like?(x)
