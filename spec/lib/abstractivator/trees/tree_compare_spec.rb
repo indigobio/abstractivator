@@ -3,6 +3,7 @@ require 'abstractivator/trees/tree_compare'
 require 'json'
 require 'rails'
 require 'pp'
+require 'abstractivator/numbers'
 
 describe Abstractivator::Trees do
 
@@ -163,6 +164,30 @@ describe Abstractivator::Trees do
               mask:   {x: Foo.new(1)},
               result: [{path: 'x', tree: {a: 1}, mask: Foo.new(1)}],
               type_comparer: Abstractivator::Trees::TypeComparer.exact
+
+      nums = Numbers.from(1).lazy.take(3)
+      example 'array for enumerable, type comparer: none',
+              tree:   {x: [1, 2, 3]},
+              mask:   {x: nums},
+              result: [],
+              type_comparer: Abstractivator::Trees::TypeComparer.none
+
+      class Animal < Hash; end
+      class Dog < Animal; end
+
+      animal = Animal.new
+      dog = Dog.new
+      example 'subtype for supertype, type comparer: subtype',
+              tree:   {x: dog},
+              mask:   {x: animal},
+              result: [],
+              type_comparer: Abstractivator::Trees::TypeComparer.subtype
+
+      example 'supertype for subtype, type comparer: subtype',
+              tree:   {x: animal},
+              mask:   {x: dog},
+              result: [{path: 'x', tree: animal, mask: dog}],
+              type_comparer: Abstractivator::Trees::TypeComparer.subtype
     end
   end
 end

@@ -21,6 +21,10 @@ module Abstractivator
         proc { |tree, mask| tree.class == mask.class }
       end
 
+      def subtype
+        proc { |tree, mask| tree.is_a?(mask.class) }
+      end
+
       extend self
     end
 
@@ -87,7 +91,9 @@ module Abstractivator
               [diff(path, tree, mask)]
             end
           elsif array_like?(mask)
-            if array_like?(tree)
+            if array_like?(tree) && type_comparer.call(tree, mask)
+              tree = tree.to_a
+              mask = mask.to_a
               index ||= 0
               if !tree.any? && !mask.any?
                 []
