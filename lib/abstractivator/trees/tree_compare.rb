@@ -81,7 +81,7 @@ module Abstractivator
           elsif hash_like?(mask)
             if hash_like?(tree) && type_comparer.call(tree, mask)
               mask.each_pair.flat_map do |k, v|
-                tree_compare(tree.fetch(k, :__missing__), v, push_path(path, k))
+                tree_compare(fetch(tree, k, :__missing__), v, push_path(path, k))
               end
             else
               [diff(path, tree, mask)]
@@ -114,11 +114,19 @@ module Abstractivator
       private
 
       def hash_like?(x)
-        x.respond_to?(:each_pair) && x.respond_to?(:fetch)
+        x.respond_to?(:each_pair) && (x.respond_to?(:fetch) || x.respond_to?(:[]))
       end
 
       def array_like?(x)
         x.is_a?(Array) || (!x.is_a?(Struct) && x.is_a?(Enumerable))
+      end
+
+      def fetch(hash_ish, key, default=nil, &block)
+        if hash_ish.respond_to?(:fetch)
+          hash_ish.fetch(key, default, &block)
+        else
+          hash_ish[key] || default || (block && block.call(key))
+        end
       end
 
       def hashify_set(items, get_key)
