@@ -12,7 +12,7 @@ module Abstractivator
       SetMask.new(items, get_key)
     end
 
-    module TypeComparison
+    module TypeComparer
       def none
         proc { true }
       end
@@ -24,8 +24,8 @@ module Abstractivator
       extend self
     end
 
-    def tree_compare(tree, mask, type_comparison: TypeComparison.none)
-      Comparer.new(type_comparison).tree_compare(tree, mask)
+    def tree_compare(tree, mask, type_comparer: nil)
+      Comparer.new(type_comparer || TypeComparer.none).tree_compare(tree, mask)
     end
 
     class Comparer
@@ -49,17 +49,8 @@ module Abstractivator
           are_equivalent = mask.call(tree)
           are_equivalent ? [] : [diff(path, tree, mask)]
         else
-          case mask
-          when Hash
-            if tree.is_a?(Hash)
-              mask.each_pair.flat_map do |k, v|
-                tree_compare(tree.fetch(k, :__missing__), v, push_path(path, k))
-              end
-            else
-              [diff(path, tree, mask)]
-            end
-          when SetMask # must check this before Enumerable because Structs are enumerable
-            if tree.is_a?(Enumerable)
+          if mask.is_a?(SetMask) # must check this before Enumerable because Structs are enumerable
+            if array_like?(tree)
               # convert the enumerables to hashes, then compare those hashes
               tree_items = tree
               mask_items = mask.items.dup
@@ -87,8 +78,16 @@ module Abstractivator
             else
               [diff(path, tree, mask.items)]
             end
-          when Enumerable
-            if tree.is_a?(Enumerable)
+          elsif hash_like?(mask)
+            if hash_like?(tree) && type_comparer.call(tree, mask)
+              mask.each_pair.flat_map do |k, v|
+                tree_compare(tree.fetch(k, :__missing__), v, push_path(path, k))
+              end
+            else
+              [diff(path, tree, mask)]
+            end
+          elsif array_like?(mask)
+            if array_like?(tree)
               index ||= 0
               if !tree.any? && !mask.any?
                 []
@@ -113,6 +112,19 @@ module Abstractivator
       end
 
       private
+
+      def hash_like?(x)
+        x.is_a?(Hash) ||
+            (!x.is_a?(Array) &&
+                !x.is_a?(String) &&
+                !x.is_a?(SetMask) &&
+                (x.respond_to?(:[]) &&
+                    x.respond_to?(:[]=)))
+      end
+
+      def array_like?(x)
+        x.is_a?(Array) || (!x.is_a?(Struct) && x.is_a?(Enumerable))
+      end
 
       def hashify_set(items, get_key)
         Hash[items.map{|x| [get_key.call(x), x] }]

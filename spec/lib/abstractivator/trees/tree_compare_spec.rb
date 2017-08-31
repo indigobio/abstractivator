@@ -14,8 +14,8 @@ describe Abstractivator::Trees do
 
     def self.example(description, values)
       it description do
-        tree, mask, expected = values[:tree], values[:mask], values[:result]
-        expect(tree_compare(tree, mask)).to eql expected
+        tree, mask, expected, type_comparer = values[:tree], values[:mask], values[:result], values[:type_comparer]
+        expect(tree_compare(tree, mask, type_comparer: type_comparer)).to eql expected
       end
     end
 
@@ -124,8 +124,6 @@ describe Abstractivator::Trees do
               result: []
     end
 
-
-
     context 'reports mismatched types' do
       example 'hash for primitive',
               tree:   {a: {b: 1}},
@@ -151,6 +149,20 @@ describe Abstractivator::Trees do
               tree:   {set: 1},
               mask:   {set: set_mask([{x: 1}], ->(item) { item[:x] })},
               result: [{path: 'set', tree: 1, mask: [{x: 1}]}]
+
+      Foo = Struct.new(:a)
+
+      example 'hash for struct, type comparer: none',
+              tree:   {x: {a: 1}},
+              mask:   {x: Foo.new(1)},
+              result: [],
+              type_comparer: Abstractivator::Trees::TypeComparer.none
+
+      example 'hash for struct, type comparer: exact',
+              tree:   {x: {a: 1}},
+              mask:   {x: Foo.new(1)},
+              result: [{path: 'x', tree: {a: 1}, mask: Foo.new(1)}],
+              type_comparer: Abstractivator::Trees::TypeComparer.exact
     end
   end
 end
