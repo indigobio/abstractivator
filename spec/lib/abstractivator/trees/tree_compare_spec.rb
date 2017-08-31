@@ -58,7 +58,7 @@ describe Abstractivator::Trees do
 
     example 'can ensure values are absent with :-',
             tree:   {a: 1},
-            mask:   {a: :-},
+            mask:   {a: :-, b: :-},
             result: [{path: 'a', tree: 1, mask: :__absent__}]
 
     example 'can check for any value being present with :+',

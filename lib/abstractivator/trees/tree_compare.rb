@@ -47,6 +47,8 @@ module Abstractivator
           []
         elsif mask == :+ && tree != :__missing__
           []
+        elsif mask == :- && tree == :__missing__
+          []
         elsif mask == :- && tree != :__missing__
           [diff(path, tree, :__absent__)]
         elsif mask.callable?
