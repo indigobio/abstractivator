@@ -12,7 +12,21 @@ module Abstractivator
       SetMask.new(items, get_key)
     end
 
+    module Helpers
+      refine Object do
+        def hash_like?(x)
+          x.respond_to?(:each_pair) && (x.respond_to?(:fetch) || x.respond_to?(:[]))
+        end
+
+        def array_like?(x)
+          x.is_a?(Array) || (!x.is_a?(Struct) && x.is_a?(Enumerable))
+        end
+      end
+    end
+
     module TypeComparer
+      using Helpers
+
       def none
         proc { true }
       end
@@ -22,7 +36,8 @@ module Abstractivator
       end
 
       def subtype
-        proc { |tree, mask| tree.is_a?(mask.class) }
+        # proc { |tree, mask| tree.is_a?(mask.class) }
+        proc { |tree, mask| tree.is_a?(mask.class) || (mask.is_a?(Hash) && hash_like?(tree)) }
       end
 
       extend self
@@ -33,6 +48,8 @@ module Abstractivator
     end
 
     class Comparer
+      using Helpers
+
       attr_reader :type_comparer
 
       def initialize(type_comparer)
@@ -120,14 +137,6 @@ module Abstractivator
       end
 
       private
-
-      def hash_like?(x)
-        x.respond_to?(:each_pair) && (x.respond_to?(:fetch) || x.respond_to?(:[]))
-      end
-
-      def array_like?(x)
-        x.is_a?(Array) || (!x.is_a?(Struct) && x.is_a?(Enumerable))
-      end
 
       def fetch(hash_ish, key, default=nil, &block)
         if hash_ish.respond_to?(:fetch)

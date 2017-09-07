@@ -172,11 +172,21 @@ describe Abstractivator::Trees do
               result: [],
               type_comparer: Abstractivator::Trees::TypeComparer.none
 
-      class Animal < Hash; end
+      class Entity
+        def each_pair(&block)
+          {}.each_pair(&block)
+        end
+        def [](_k)
+          nil
+        end
+      end
+
+      class Animal < Entity; end
       class Dog < Animal; end
 
       animal = Animal.new
       dog = Dog.new
+
       example 'subtype for supertype, type comparer: subtype',
               tree:   {x: dog},
               mask:   {x: animal},
@@ -187,6 +197,12 @@ describe Abstractivator::Trees do
               tree:   {x: animal},
               mask:   {x: dog},
               result: [{path: 'x', tree: animal, mask: dog}],
+              type_comparer: Abstractivator::Trees::TypeComparer.subtype
+
+      example 'hashlike for Hash, type comparer: subtype',
+              tree:   {x: animal},
+              mask:   {x: {}},
+              result: [],
               type_comparer: Abstractivator::Trees::TypeComparer.subtype
     end
   end
