@@ -161,6 +161,14 @@ class Array
   end
 end
 
+class Symbol
+  def to_safe_proc
+    proc do |x|
+      x&.send(self)
+    end
+  end
+end
+
 class Object
   def callable?
     respond_to?(:call)
