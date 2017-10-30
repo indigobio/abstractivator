@@ -245,6 +245,20 @@ describe 'Array#to_proc' do
   end
 end
 
+describe 'Symbol#to_safe_proc' do
+  it 'returns a "safe operator" proc' do
+    upcase = :upcase.to_safe_proc
+    expect(upcase.call('a')).to eql 'A'
+    expect(upcase.call(nil)).to eql nil
+  end
+  it 'handles booleans properly' do
+    to_s = :to_s.to_safe_proc
+    expect(to_s.call(nil)).to eql nil
+    expect(to_s.call(false)).to eql 'false'
+    expect(to_s.call(true)).to eql 'true'
+  end
+end
+
 describe 'Object#callable?' do
   it 'determines whether or not the object has a public :call method' do
     expect(1.callable?).to be_falsey
