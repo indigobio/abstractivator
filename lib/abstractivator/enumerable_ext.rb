@@ -148,4 +148,8 @@ module Enumerable
     end
     acc
   end
+
+  def fold_right(*args, &combine)
+    reverse.reduce(*args, &combine&.reverse_args)
+  end
 end
