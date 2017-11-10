@@ -217,4 +217,22 @@ describe Enumerable do
       expect(result).to eql [g, a, b]
     end
   end
+
+  describe '#fold_right' do
+    it 'folds right' do
+      op = proc { |char, acc| "#{char}(#{acc})" }
+      expect(%w[].fold_right('z', &op)).to eql 'z'
+      expect(%w[a].fold_right('z', &op)).to eql 'a(z)'
+      expect(%w[a b].fold_right('z', &op)).to eql 'a(b(z))'
+      expect(%w[a b c].fold_right('z', &op)).to eql 'a(b(c(z)))'
+    end
+    it 'allows the same argument variations as Enumerable#reduce' do
+      expect([].fold_right(:+)).to be_nil
+      expect([].fold_right(0, :+)).to eql 0
+      expect([1].fold_right(:+)).to eql 1
+      expect([1].fold_right(0, :+)).to eql 1
+      expect([1,2].fold_right(:+)).to eql 3
+      expect([1,2].fold_right(0, :+)).to eql 3
+    end
+  end
 end
