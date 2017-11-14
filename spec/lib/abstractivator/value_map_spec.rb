@@ -22,7 +22,7 @@ describe '#value_map' do
   end
 
   it 'maps nil' do
-    expect(nil.value_map(&method(:square))).to be nil
+    expect(nil.value_map(&:to_s)).to eql ''
   end
 
   def square(x)
