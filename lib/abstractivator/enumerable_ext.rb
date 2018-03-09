@@ -49,7 +49,9 @@ module Enumerable
   end
 
   def hash_map(get_key=->x{x}, &get_value)
-    Hash[self.map{|x| [Proc.loose_call(get_key, [x]), get_value ? get_value.call(x) : x]}]
+    self.each_with_object({}) do |x, result|
+      result[Proc.loose_call(get_key, [x])] = get_value ? get_value.call(x) : x
+    end
   end
 
   def outer_join(right, get_left_key, get_right_key, default_value)
