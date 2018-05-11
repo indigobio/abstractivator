@@ -1,4 +1,6 @@
-# Abstractivator
+# DEPRECATED: this code	has moved into ascent-web
+
+# ~~Abstractivator~~
 
 A collection of useful ruby code
 
